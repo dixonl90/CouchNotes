@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Couch Notes</string>
+    <string name="title_note_list">Notes</string>
+    <string name="title_note_detail">Note Detail</string>
+    <string name="title_activity_add_note">AddNoteActivity</string>
+    <string name="action_settings">Settings</string>
+</resources>

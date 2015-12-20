@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package="com.bestbeforeapp.couchnotes"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:name=".CouchNotesApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme.NoActionBar">
+        <activity
+            android:name=".list.NoteListActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".details.NoteDetailActivity"
+            android:label="@string/title_note_detail"
+            android:parentActivityName=".list.NoteListActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".list.NoteListActivity"/>
+        </activity>
+        <activity
+            android:name=".add.AddNoteActivity"
+            android:label="@string/title_activity_add_note"
+            android:parentActivityName=".list.NoteListActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.bestbeforeapp.couchnotes.list.NoteListActivity"/>
+        </activity>
+    </application>
+
+</manifest>
