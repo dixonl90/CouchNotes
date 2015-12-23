@@ -1,5 +1,7 @@
 package com.bestbeforeapp.couchnotes;
 
+import android.content.Context;
+
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.Manager;
@@ -25,13 +27,20 @@ public class CouchNotesApplication extends android.app.Application {
 
     public static String SYNC_URL;
 
-    private Manager manager;
-    private Database database;
+    private static Manager manager;
+    private static Database database;
 
+    private static Context context;
+
+    public static Context getAppContext() {
+        return CouchNotesApplication.context;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        CouchNotesApplication.context = getApplicationContext();
 
         /**
          * Get the sync gateway from a local properties file. I don't want everyone putting data
@@ -57,11 +66,11 @@ public class CouchNotesApplication extends android.app.Application {
 
     }
 
-    public Database initDatabase() {
+    public static Database initDatabase() {
 
-        if ((this.database == null)) {
+        if ((database == null)) {
             try {
-                this.database = getManagerInstance().getDatabase(DATABASE_NAME);
+                database = getManagerInstance().getDatabase(DATABASE_NAME);
             } catch (CouchbaseLiteException e) {
                 Log.e(TAG, "Cannot get Database", e);
             }
@@ -70,19 +79,19 @@ public class CouchNotesApplication extends android.app.Application {
         return database;
     }
 
-    private Manager getManagerInstance() {
+    private static Manager getManagerInstance() {
         if (manager == null) {
 
             Manager.enableLogging("CouchNotes", Log.VERBOSE);
             Manager.enableLogging(Log.TAG, Log.VERBOSE);
-            Manager.enableLogging(Log.TAG_SYNC_ASYNC_TASK, Log.VERBOSE);
-            Manager.enableLogging(Log.TAG_SYNC, Log.VERBOSE);
-            Manager.enableLogging(Log.TAG_QUERY, Log.VERBOSE);
-            Manager.enableLogging(Log.TAG_VIEW, Log.VERBOSE);
-            Manager.enableLogging(Log.TAG_DATABASE, Log.VERBOSE);
+//            Manager.enableLogging(Log.TAG_SYNC_ASYNC_TASK, Log.VERBOSE);
+//            Manager.enableLogging(Log.TAG_SYNC, Log.VERBOSE);
+//            Manager.enableLogging(Log.TAG_QUERY, Log.VERBOSE);
+//            Manager.enableLogging(Log.TAG_VIEW, Log.VERBOSE);
+//            Manager.enableLogging(Log.TAG_DATABASE, Log.VERBOSE);
 
             try {
-                manager = new Manager(new AndroidContext(this), Manager.DEFAULT_OPTIONS);
+                manager = new Manager(new AndroidContext(context), Manager.DEFAULT_OPTIONS);
             } catch (IOException e) {
                 Log.e(TAG, "Cannot create Manager object", e);
             }
@@ -90,7 +99,7 @@ public class CouchNotesApplication extends android.app.Application {
         return manager;
     }
 
-    public Database getDatabase() {
-        return database;
+    public static Database getDatabase() {
+        return initDatabase();
     }
 }
