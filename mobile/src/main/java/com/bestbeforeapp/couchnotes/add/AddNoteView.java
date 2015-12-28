@@ -8,8 +8,8 @@ import com.hannesdorfmann.mosby.mvp.MvpView;
  */
 public interface AddNoteView extends MvpView {
 
-    void showErrorSnackBar(String message, CouchbaseLiteException e);
+    void showErrorSnackBar(String message);
 
-    void showSuccessSnackBar(String message);
+    void finishActivity();
 
 }

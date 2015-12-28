@@ -1,7 +1,5 @@
 package com.bestbeforeapp.couchnotes.add;
 
-import android.support.design.widget.Snackbar;
-
 import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
@@ -23,13 +21,12 @@ public class AddNotePresenter extends MvpBasePresenter<AddNoteView> {
 
             Document doc = createNewNote(title, content);
 
-            if (isViewAttached())
-                getView().showSuccessSnackBar("Saved note! " + doc.getId());
+            if (isViewAttached()) getView().finishActivity();
 
         } catch (CouchbaseLiteException e) {
 
             if (isViewAttached())
-                getView().showErrorSnackBar("Could not save note! ", e);
+                getView().showErrorSnackBar("Could not save note! " + e.getCBLStatus());
 
         }
     }
@@ -38,7 +35,7 @@ public class AddNotePresenter extends MvpBasePresenter<AddNoteView> {
 
         Calendar calendar = GregorianCalendar.getInstance();
 
-        Document document = getDatabase().createDocument();
+        Document document = CouchNotesApplication.getDatabase().createDocument();
 
         Map<String, Object> properties = new HashMap<String, Object>();
         properties.put("text", title);
@@ -48,10 +45,6 @@ public class AddNotePresenter extends MvpBasePresenter<AddNoteView> {
         document.putProperties(properties);
 
         return document;
-    }
-
-    private Database getDatabase() {
-        return CouchNotesApplication.getDatabase();
     }
 
 }

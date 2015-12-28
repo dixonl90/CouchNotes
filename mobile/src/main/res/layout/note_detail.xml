@@ -1,9 +1,42 @@
-<TextView android:id="@+id/note_detail"
-          style="?android:attr/textAppearanceLarge"
-          xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          android:padding="16dp"
-          android:textIsSelectable="true"
-          tools:context=".details.NoteDetailFragment"/>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+    >
+
+<!-- Loading View -->
+<ProgressBar
+    android:id="@+id/loadingView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:indeterminate="true"
+    />
+
+<!-- Content View -->
+<LinearLayout
+    android:id="@+id/contentView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <TextView android:id="@+id/note_content"
+        style="?android:attr/textAppearanceLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:textIsSelectable="true"
+        tools:context=".details.NoteDetailFragment"/>
+
+</LinearLayout>
+
+
+<!-- Error view -->
+<TextView
+    android:id="@+id/errorView"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Could not load note!"
+    />
+
+</FrameLayout>
