@@ -1,37 +1,48 @@
 package com.bestbeforeapp.couchnotes.details;
 
-import android.os.SystemClock;
-
 import com.bestbeforeapp.couchnotes.CouchNotesApplication;
+import com.bestbeforeapp.couchnotes.CouchbaseObservables;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.Document;
 import com.hannesdorfmann.mosby.mvp.MvpBasePresenter;
 
-/**
- * Created by luke on 28/12/15.
- */
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+
 public class NoteDetailPresenter extends MvpBasePresenter<NoteDetailView> {
 
     public void loadNote(String noteId) {
 
         getView().showLoading(false);
 
-        Database database = CouchNotesApplication.getDatabase();
+        CouchbaseObservables.getDocument(noteId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Document>() {
+                    @Override
+                    public void onCompleted() {
 
-        SystemClock.sleep(10000);
+                    }
 
-        Document note = database.getExistingDocument(noteId);
+                    @Override
+                    public void onError(Throwable e) {
+                        if (isViewAttached())
+                            getView().showError(e, false);
+                    }
 
-        if(note != null) {
-            if (isViewAttached()) {
-                getView().setData(note);
-                getView().showContent();
-            }
-        }
-        else {
-            if(isViewAttached())
-                getView().showError(null, false);
-        }
-
+                    @Override
+                    public void onNext(Document note) {
+                        if (note != null) {
+                            if (isViewAttached()) {
+                                getView().setData(note);
+                                getView().showContent();
+                            }
+                        }
+                    }
+                });
     }
 }
