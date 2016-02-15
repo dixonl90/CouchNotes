@@ -1,14 +1,21 @@
 package com.bestbeforeapp.couchnotes.add;
 
-import com.bestbeforeapp.couchnotes.CouchbaseObservables;
+import android.support.annotation.NonNull;
+
+import com.bestbeforeapp.couchnotes.data.CouchbaseObservables;
 import com.couchbase.lite.Document;
-import com.hannesdorfmann.mosby.mvp.MvpBasePresenter;
 
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class AddNotePresenter extends MvpBasePresenter<AddNoteView> {
+public class AddNotePresenter implements AddNoteContract.UserActions {
+
+    private final AddNoteContract.ViewActions addNoteView;
+
+    public AddNotePresenter(@NonNull AddNoteContract.ViewActions viewActions) {
+        addNoteView = viewActions;
+    }
 
     public void addNote(String title, String content) {
 
@@ -23,16 +30,13 @@ public class AddNotePresenter extends MvpBasePresenter<AddNoteView> {
 
                     @Override
                     public void onError(Throwable e) {
-                        if (isViewAttached())
-                            getView().showErrorSnackBar("Could not save note! " + e.getMessage());
+                            addNoteView.showErrorSnackBar("Could not save note! " + e.getMessage());
                     }
 
                     @Override
                     public void onNext(Document note) {
                         if (note != null) {
-                            if (isViewAttached()) {
-                                getView().finishActivity();
-                            }
+                            addNoteView.finishActivity();
                         }
                     }
                 });

@@ -9,6 +9,9 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -16,15 +19,18 @@ import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.add.AddNoteActivity;
 import com.bestbeforeapp.couchnotes.details.NoteDetailActivity;
-import com.bestbeforeapp.couchnotes.details.NoteDetailFragment;
-import com.couchbase.lite.Database;
+import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Document;
 import com.couchbase.lite.Emitter;
 import com.couchbase.lite.Mapper;
+import com.couchbase.lite.Query;
+import com.couchbase.lite.QueryEnumerator;
+import com.couchbase.lite.QueryRow;
 import com.couchbase.lite.replicator.Replication;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -36,7 +42,7 @@ import java.util.Map;
  * item details side-by-side using two vertical panes.
  */
 public class NoteListActivity extends AppCompatActivity implements ListAdapter.OnItemClickListener,
-        ListAdapter.OnActivatedListener, Replication.ChangeListener {
+        ListAdapter.OnActivatedListener, Replication.ChangeListener, NoteListView.ViewActions {
 
     private static final String TAG = "NoteListActivity";
     /**
@@ -48,12 +54,16 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
     public static final String designDocName = "notes-local";
     public static final String byDateViewName = "byDate";
 
+    private NoteListPresenter presenter;
+
     private ListAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_list);
+
+        presenter = createPresenter();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -83,25 +93,21 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
         }
     }
 
+    @NonNull
+    public NoteListPresenter createPresenter() {
+        return new NoteListPresenter(this);
+    }
+
     @Override
     public void onItemClick(View view, int position) {
         Document document = (Document) adapter.getItem(position);
-
         Log.d(TAG, "Clicked " + document.getProperty("text"));
-
-        Intent intent = new Intent(this, NoteDetailActivity.class);
-        intent.putExtra(NoteDetailFragment.ARG_ITEM_ID, document.getId());
-        startActivity(intent);
-    }
-
-    private Database getDatabase() {
-        CouchNotesApplication couchNotesApplication = (CouchNotesApplication) getApplication();
-        return couchNotesApplication.getDatabase();
+        presenter.openNote(document.getId());
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
 
-        com.couchbase.lite.View viewItemsByDate = getDatabase().getView(
+        com.couchbase.lite.View viewItemsByDate = CouchNotesApplication.getDatabase().getView(
                 String.format("%s/%s", designDocName, byDateViewName));
 
         viewItemsByDate.setMap(new Mapper() {
@@ -141,10 +147,10 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
             throw new RuntimeException(e);
         }
 
-        Replication pullReplication = getDatabase().createPullReplication(syncUrl);
+        Replication pullReplication = CouchNotesApplication.getDatabase().createPullReplication(syncUrl);
         pullReplication.setContinuous(true);
 
-        Replication pushReplication = getDatabase().createPushReplication(syncUrl);
+        Replication pushReplication = CouchNotesApplication.getDatabase().createPushReplication(syncUrl);
         pushReplication.setContinuous(true);
 
         pullReplication.start();
@@ -188,5 +194,36 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
             }
         });
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_notes_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_delete_all:
+                try {
+                    // Let's find the documents that have conflicts so we can resolve them:
+                    Query query = CouchNotesApplication.getDatabase().createAllDocumentsQuery();
+                    query.setAllDocsMode(Query.AllDocsMode.ALL_DOCS);
+                    QueryEnumerator result = query.run();
+                    for (Iterator<QueryRow> it = result; it.hasNext(); ) {
+                        QueryRow row = it.next();
+                        Log.d("DeleteAll", "Deleting " + row.getDocumentId() + " - " + row.getDocument().getProperty("text"));
+                        row.getDocument().delete();
+                    }
+                } catch (CouchbaseLiteException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

@@ -1,23 +1,25 @@
 package com.bestbeforeapp.couchnotes.details;
 
-import com.bestbeforeapp.couchnotes.CouchNotesApplication;
-import com.bestbeforeapp.couchnotes.CouchbaseObservables;
-import com.couchbase.lite.Database;
+import android.support.annotation.NonNull;
+
+import com.bestbeforeapp.couchnotes.data.CouchbaseObservables;
 import com.couchbase.lite.Document;
-import com.hannesdorfmann.mosby.mvp.MvpBasePresenter;
 
-import java.util.concurrent.TimeUnit;
-
-import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class NoteDetailPresenter extends MvpBasePresenter<NoteDetailView> {
+public class NoteDetailPresenter implements NoteDetailContract.UserActions {
+
+    private final NoteDetailContract.ViewActions noteDetailView;
+
+    public NoteDetailPresenter(@NonNull NoteDetailContract.ViewActions viewActions) {
+        noteDetailView = viewActions;
+    }
 
     public void loadNote(String noteId) {
 
-        getView().showLoading(false);
+        noteDetailView.showLoading(true);
 
         CouchbaseObservables.getDocument(noteId)
                 .subscribeOn(Schedulers.io())
@@ -30,19 +32,22 @@ public class NoteDetailPresenter extends MvpBasePresenter<NoteDetailView> {
 
                     @Override
                     public void onError(Throwable e) {
-                        if (isViewAttached())
-                            getView().showError(e, false);
+                        noteDetailView.showLoading(false);
+                        noteDetailView.showError(e);
                     }
 
                     @Override
                     public void onNext(Document note) {
                         if (note != null) {
-                            if (isViewAttached()) {
-                                getView().setData(note);
-                                getView().showContent();
-                            }
+                            noteDetailView.showLoading(false);
+                            noteDetailView.setData(note);
                         }
                     }
                 });
+    }
+
+    @Override
+    public void editNote() {
+
     }
 }

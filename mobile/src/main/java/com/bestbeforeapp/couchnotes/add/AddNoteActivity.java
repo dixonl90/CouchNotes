@@ -10,25 +10,13 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.EditText;
 
-import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.bestbeforeapp.couchnotes.R;
-import com.couchbase.lite.CouchbaseLiteException;
-import com.couchbase.lite.Database;
-import com.couchbase.lite.Document;
-import com.hannesdorfmann.mosby.mvp.MvpActivity;
-import com.hannesdorfmann.mosby.mvp.delegate.ActivityMvpDelegateCallback;
-
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.Map;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-public class AddNoteActivity
-        extends MvpActivity<AddNoteView, AddNotePresenter>
-        implements AddNoteView, FloatingActionButton.OnClickListener {
+public class AddNoteActivity extends AppCompatActivity
+        implements AddNoteContract, FloatingActionButton.OnClickListener, AddNoteContract.ViewActions {
 
     @Bind(R.id.note_title)
     EditText noteTitle;
@@ -37,10 +25,14 @@ public class AddNoteActivity
     @Bind(R.id.add_note_fab)
     FloatingActionButton fab;
 
+    private AddNotePresenter presenter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+
+        presenter = createPresenter();
 
         ButterKnife.bind(this);
 
@@ -55,9 +47,8 @@ public class AddNoteActivity
     }
 
     @NonNull
-    @Override
     public AddNotePresenter createPresenter() {
-        return new AddNotePresenter();
+        return new AddNotePresenter(this);
     }
 
     public void showErrorSnackBar(String message) {

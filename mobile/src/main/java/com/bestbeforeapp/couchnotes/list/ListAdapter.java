@@ -11,6 +11,10 @@ import com.bestbeforeapp.couchnotes.R;
 import com.couchbase.lite.Document;
 import com.couchbase.lite.LiveQuery;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
@@ -40,8 +44,20 @@ public class ListAdapter extends LiveQueryRecyclerAdapter<ListAdapter.ViewHolder
 
         final Document task = (Document) getItem(position);
 
+        Calendar cal = GregorianCalendar.getInstance();
+
+        try {
+            cal.setTimeInMillis((Long) task.getProperty("created_at"));
+        }
+        catch (ClassCastException castEx) {
+//            Timber.e();
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+        dateFormat.setTimeZone(cal.getTimeZone());
+
         listViewHolder.textView.setText((String) task.getProperty("text"));
-        listViewHolder.date.setText(task.getId());
+        listViewHolder.date.setText(dateFormat.format(cal.getTime()));
 
         viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override

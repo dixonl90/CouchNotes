@@ -5,18 +5,15 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.list.NoteListActivity;
 import com.couchbase.lite.Document;
-import com.hannesdorfmann.mosby.mvp.lce.MvpLceFragment;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -27,11 +24,12 @@ import butterknife.ButterKnife;
  * in two-pane mode (on tablets) or a {@link NoteDetailActivity}
  * on handsets.
  */
-public class NoteDetailFragment
-        extends MvpLceFragment<LinearLayout, Document, NoteDetailView, NoteDetailPresenter>
-        implements NoteDetailView {
+public class NoteDetailFragment extends Fragment
+        implements NoteDetailContract.ViewActions {
 
     @Bind(R.id.note_content) TextView noteContent;
+
+    private NoteDetailPresenter presenter;
 
     /**
      * The fragment argument representing the item ID that this fragment
@@ -43,20 +41,14 @@ public class NoteDetailFragment
     }
 
     @NonNull
-    @Override
     public NoteDetailPresenter createPresenter() {
-        return new NoteDetailPresenter();
-    }
-
-    @Override
-    protected String getErrorMessage(Throwable e, boolean pullToRefresh) {
-        return null;
+        return new NoteDetailPresenter(this);
     }
 
     @Override public void onViewCreated(View view, @Nullable Bundle savedInstance) {
         super.onViewCreated(view, savedInstance);
         if (getArguments().containsKey(ARG_ITEM_ID)) {
-            loadData(false);
+            presenter.loadNote(getArguments().getString(ARG_ITEM_ID));
         }
     }
 
@@ -65,16 +57,24 @@ public class NoteDetailFragment
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.note_detail, container, false);
         ButterKnife.bind(this, rootView);
+
+        presenter = createPresenter();
+
         return rootView;
     }
 
     @Override
-    public void editNote() {
-
+    public void showLoading(boolean loading) {
+        if(loading)
+            getActivity().findViewById(R.id.loadingView).setVisibility(View.VISIBLE);
+        else
+            getActivity().findViewById(R.id.loadingView).setVisibility(View.GONE);
     }
 
     @Override
     public void setData(Document note) {
+
+        getActivity().findViewById(R.id.errorView).setVisibility(View.GONE);
 
         Activity activity = this.getActivity();
         CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
@@ -87,7 +87,7 @@ public class NoteDetailFragment
     }
 
     @Override
-    public void loadData(boolean pullToRefresh) {
-        presenter.loadNote(getArguments().getString(ARG_ITEM_ID));
+    public void showError(Throwable e) {
+        getActivity().findViewById(R.id.errorView).setVisibility(View.VISIBLE);
     }
 }

@@ -1,5 +1,6 @@
-package com.bestbeforeapp.couchnotes;
+package com.bestbeforeapp.couchnotes.data;
 
+import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.couchbase.lite.Database;
 import com.couchbase.lite.Document;
 
@@ -49,7 +50,7 @@ public class CouchbaseObservables {
                     Map<String, Object> properties = new HashMap<String, Object>();
                     properties.put("text", title);
                     properties.put("content", content);
-                    properties.put("created_at", calendar);
+                    properties.put("created_at", calendar.getTimeInMillis());
 
                     document.putProperties(properties);
 
