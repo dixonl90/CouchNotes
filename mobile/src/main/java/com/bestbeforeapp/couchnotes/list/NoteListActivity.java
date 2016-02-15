@@ -19,18 +19,13 @@ import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.add.AddNoteActivity;
 import com.bestbeforeapp.couchnotes.details.NoteDetailActivity;
-import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Document;
 import com.couchbase.lite.Emitter;
 import com.couchbase.lite.Mapper;
-import com.couchbase.lite.Query;
-import com.couchbase.lite.QueryEnumerator;
-import com.couchbase.lite.QueryRow;
 import com.couchbase.lite.replicator.Replication;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -208,19 +203,7 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.action_delete_all:
-                try {
-                    // Let's find the documents that have conflicts so we can resolve them:
-                    Query query = CouchNotesApplication.getDatabase().createAllDocumentsQuery();
-                    query.setAllDocsMode(Query.AllDocsMode.ALL_DOCS);
-                    QueryEnumerator result = query.run();
-                    for (Iterator<QueryRow> it = result; it.hasNext(); ) {
-                        QueryRow row = it.next();
-                        Log.d("DeleteAll", "Deleting " + row.getDocumentId() + " - " + row.getDocument().getProperty("text"));
-                        row.getDocument().delete();
-                    }
-                } catch (CouchbaseLiteException e) {
-                    e.printStackTrace();
-                }
+                    presenter.deleteAllNotes();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

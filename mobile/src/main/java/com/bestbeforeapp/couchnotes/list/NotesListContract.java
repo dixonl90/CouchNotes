@@ -9,6 +9,8 @@ public interface NotesListContract {
 
         void openNote(String documentId);
 
+        void deleteAllNotes();
+
     }
 
     interface ViewActions {
