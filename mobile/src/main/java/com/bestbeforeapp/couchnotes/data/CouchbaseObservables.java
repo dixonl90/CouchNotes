@@ -32,7 +32,7 @@ public class CouchbaseObservables {
                     subscriber.onError(e);
                 }
             }
-        }).delay(1, TimeUnit.SECONDS);
+        }).delay(1, TimeUnit.SECONDS); //TODO: Remove in production!
     }
 
     public static Observable<Document> addDocument (final String title, final String content) {

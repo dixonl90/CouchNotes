@@ -7,6 +7,7 @@ import com.couchbase.lite.Database;
 import com.couchbase.lite.Manager;
 import com.couchbase.lite.android.AndroidContext;
 import com.couchbase.lite.util.Log;
+import com.facebook.FacebookSdk;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +42,8 @@ public class CouchNotesApplication extends android.app.Application {
         super.onCreate();
 
         CouchNotesApplication.context = getApplicationContext();
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
 
         /**
          * Get the sync gateway from a local properties file. I don't want everyone putting data
@@ -84,11 +87,11 @@ public class CouchNotesApplication extends android.app.Application {
 
             Manager.enableLogging("CouchNotes", Log.VERBOSE);
             Manager.enableLogging(Log.TAG, Log.VERBOSE);
-//            Manager.enableLogging(Log.TAG_SYNC_ASYNC_TASK, Log.VERBOSE);
-//            Manager.enableLogging(Log.TAG_SYNC, Log.VERBOSE);
-//            Manager.enableLogging(Log.TAG_QUERY, Log.VERBOSE);
-//            Manager.enableLogging(Log.TAG_VIEW, Log.VERBOSE);
-//            Manager.enableLogging(Log.TAG_DATABASE, Log.VERBOSE);
+            Manager.enableLogging(Log.TAG_SYNC_ASYNC_TASK, Log.VERBOSE);
+            Manager.enableLogging(Log.TAG_SYNC, Log.VERBOSE);
+            Manager.enableLogging(Log.TAG_QUERY, Log.VERBOSE);
+            Manager.enableLogging(Log.TAG_VIEW, Log.VERBOSE);
+            Manager.enableLogging(Log.TAG_DATABASE, Log.VERBOSE);
 
             try {
                 manager = new Manager(new AndroidContext(context), Manager.DEFAULT_OPTIONS);

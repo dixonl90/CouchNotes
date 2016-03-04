@@ -19,9 +19,13 @@ import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.add.AddNoteActivity;
 import com.bestbeforeapp.couchnotes.details.NoteDetailActivity;
+import com.bestbeforeapp.couchnotes.login.LoginActivity;
+import com.bestbeforeapp.couchnotes.preferences.CouchNotesPreferences;
 import com.couchbase.lite.Document;
 import com.couchbase.lite.Emitter;
 import com.couchbase.lite.Mapper;
+import com.couchbase.lite.auth.Authenticator;
+import com.couchbase.lite.auth.AuthenticatorFactory;
 import com.couchbase.lite.replicator.Replication;
 
 import java.net.MalformedURLException;
@@ -53,16 +57,25 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
 
     private ListAdapter adapter;
 
+    private CouchNotesPreferences preferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_list);
 
         presenter = createPresenter();
+        preferences = new CouchNotesPreferences();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
+
+        if (preferences.getLastReceivedFbAccessToken() == null) {
+            Intent i = new Intent(this, LoginActivity.class);
+            startActivity(i);
+            finish();
+        }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -142,14 +155,25 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
             throw new RuntimeException(e);
         }
 
-        Replication pullReplication = CouchNotesApplication.getDatabase().createPullReplication(syncUrl);
-        pullReplication.setContinuous(true);
+        Authenticator facebookAuthenticator = AuthenticatorFactory
+                .createFacebookAuthenticator(preferences.getLastReceivedFbAccessToken());
 
-        Replication pushReplication = CouchNotesApplication.getDatabase().createPushReplication(syncUrl);
+        Replication pullReplication = CouchNotesApplication.getDatabase()
+                .createPullReplication(syncUrl);
+        pullReplication.setContinuous(true);
+        pullReplication.setAuthenticator(facebookAuthenticator);
+
+        Replication pushReplication = CouchNotesApplication.getDatabase()
+                .createPushReplication(syncUrl);
         pushReplication.setContinuous(true);
+        pushReplication.setAuthenticator(facebookAuthenticator);
 
         pullReplication.start();
         pushReplication.start();
+
+
+
+//        pullReplication.setAuthenticator(AuthenticatorFactory.createFacebookAuthenticator());
 
         pullReplication.addChangeListener(this);
         pushReplication.addChangeListener(this);
