@@ -1,6 +1,6 @@
 package com.bestbeforeapp.couchnotes.details;
 
-import com.couchbase.lite.Document;
+import com.bestbeforeapp.couchnotes.model.Note;
 
 /**
  * Created by luke on 28/12/15.
@@ -11,9 +11,9 @@ public interface NoteDetailContract {
 
         void showLoading(boolean loading);
 
-        void setData(Document note);
+        void setData(Note note);
 
-        void showError(Throwable e);
+        void showError(String e);
 
     }
 

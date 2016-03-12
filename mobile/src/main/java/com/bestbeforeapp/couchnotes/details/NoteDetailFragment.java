@@ -13,10 +13,11 @@ import android.widget.TextView;
 
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.list.NoteListActivity;
-import com.couchbase.lite.Document;
+import com.bestbeforeapp.couchnotes.model.Note;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 /**
  * A fragment representing a single Note detail screen.
@@ -72,22 +73,23 @@ public class NoteDetailFragment extends Fragment
     }
 
     @Override
-    public void setData(Document note) {
+    public void showError(String e) {
+        Timber.e(e);
+        getActivity().findViewById(R.id.errorView).setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void setData(Note note) {
 
         getActivity().findViewById(R.id.errorView).setVisibility(View.GONE);
 
         Activity activity = this.getActivity();
         CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
         if (appBarLayout != null) {
-            appBarLayout.setTitle((String)  note.getProperty("text"));
+            appBarLayout.setTitle((String)  note.getTitle());
         }
 
-        noteContent.setText((String) note.getProperty("content"));
+        noteContent.setText((String) note.getContent());
 
-    }
-
-    @Override
-    public void showError(Throwable e) {
-        getActivity().findViewById(R.id.errorView).setVisibility(View.VISIBLE);
     }
 }

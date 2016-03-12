@@ -13,24 +13,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
-import com.bestbeforeapp.couchnotes.CouchNotesApplication;
 import com.bestbeforeapp.couchnotes.R;
 import com.bestbeforeapp.couchnotes.add.AddNoteActivity;
 import com.bestbeforeapp.couchnotes.details.NoteDetailActivity;
-import com.bestbeforeapp.couchnotes.login.LoginActivity;
+import com.bestbeforeapp.couchnotes.model.Note;
 import com.bestbeforeapp.couchnotes.preferences.CouchNotesPreferences;
-import com.couchbase.lite.Document;
-import com.couchbase.lite.Emitter;
-import com.couchbase.lite.Mapper;
-import com.couchbase.lite.auth.Authenticator;
-import com.couchbase.lite.auth.AuthenticatorFactory;
-import com.couchbase.lite.replicator.Replication;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
+import com.firebase.client.Firebase;
 
 /**
  * An activity representing a list of Notes. This activity
@@ -40,8 +29,8 @@ import java.util.Map;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class NoteListActivity extends AppCompatActivity implements ListAdapter.OnItemClickListener,
-        ListAdapter.OnActivatedListener, Replication.ChangeListener, NoteListView.ViewActions {
+public class NoteListActivity extends AppCompatActivity implements NoteListAdapter.OnItemClickListener,
+        NoteListAdapter.OnActivatedListener, NoteListView.ViewActions {
 
     private static final String TAG = "NoteListActivity";
     /**
@@ -55,7 +44,7 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
 
     private NoteListPresenter presenter;
 
-    private ListAdapter adapter;
+    private NoteListAdapter adapter;
 
     private CouchNotesPreferences preferences;
 
@@ -71,11 +60,11 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        if (preferences.getLastReceivedFbAccessToken() == null) {
-            Intent i = new Intent(this, LoginActivity.class);
-            startActivity(i);
-            finish();
-        }
+//        if (preferences.getLastReceivedFbAccessToken() == null) {
+//            Intent i = new Intent(this, LoginActivity.class);
+//            startActivity(i);
+//            finish();
+//        }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -89,8 +78,6 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
         assert recyclerView != null;
 
         setupRecyclerView((RecyclerView) recyclerView);
-
-        startSync();
 
         if (findViewById(R.id.note_detail_container) != null) {
             // The detail container view will be present only in the
@@ -108,27 +95,17 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
 
     @Override
     public void onItemClick(View view, int position) {
-        Document document = (Document) adapter.getItem(position);
-        Log.d(TAG, "Clicked " + document.getProperty("text"));
-        presenter.openNote(document.getId());
+
+        Note note = adapter.getItem(position);
+        Log.d(TAG, "Clicked " + note.getTitle());
+        presenter.openNote(adapter.getRef(position).getKey());
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
 
-        com.couchbase.lite.View viewItemsByDate = CouchNotesApplication.getDatabase().getView(
-                String.format("%s/%s", designDocName, byDateViewName));
+        Firebase ref = new Firebase("https://notes-app-test.firebaseio.com/notes");
 
-        viewItemsByDate.setMap(new Mapper() {
-            @Override
-            public void map(Map<String, Object> document, Emitter emitter) {
-                Object createdAt = document.get("created_at");
-                if (createdAt != null) {
-                    emitter.emit(createdAt.toString(), null);
-                }
-            }
-        }, "1.0");
-
-        adapter = new ListAdapter(this, viewItemsByDate.createQuery().toLiveQuery());
+        adapter = new NoteListAdapter(Note.class, R.layout.note_list_content, ref);
 
         recyclerView.setHasFixedSize(true);
         recyclerView.addItemDecoration(new DividerItemDecoration(this, null));
@@ -143,76 +120,6 @@ public class NoteListActivity extends AppCompatActivity implements ListAdapter.O
     @Override
     public void onActivated(int position) {
         adapter.setActivated(position);
-    }
-
-    private void startSync() {
-
-        URL syncUrl;
-
-        try {
-            syncUrl = new URL(CouchNotesApplication.SYNC_URL);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-
-        Authenticator facebookAuthenticator = AuthenticatorFactory
-                .createFacebookAuthenticator(preferences.getLastReceivedFbAccessToken());
-
-        Replication pullReplication = CouchNotesApplication.getDatabase()
-                .createPullReplication(syncUrl);
-        pullReplication.setContinuous(true);
-        pullReplication.setAuthenticator(facebookAuthenticator);
-
-        Replication pushReplication = CouchNotesApplication.getDatabase()
-                .createPushReplication(syncUrl);
-        pushReplication.setContinuous(true);
-        pushReplication.setAuthenticator(facebookAuthenticator);
-
-        pullReplication.start();
-        pushReplication.start();
-
-
-
-//        pullReplication.setAuthenticator(AuthenticatorFactory.createFacebookAuthenticator());
-
-        pullReplication.addChangeListener(this);
-        pushReplication.addChangeListener(this);
-
-    }
-
-    @Override
-    public void changed(Replication.ChangeEvent event) {
-
-        Replication replication = event.getSource();
-        com.couchbase.lite.util.Log.d(TAG, "Replication : " + replication + " changed.");
-        if (!replication.isRunning()) {
-            String msg = String.format("Replicator %s not running", replication);
-            com.couchbase.lite.util.Log.d(TAG, msg);
-        }
-        else {
-            int processed = replication.getCompletedChangesCount();
-            int total = replication.getChangesCount();
-            String msg = String.format("Replicator processed %d / %d", processed, total);
-            com.couchbase.lite.util.Log.d(TAG, msg);
-        }
-
-        if (event.getError() != null) {
-            showError("Sync error", event.getError());
-        }
-
-    }
-
-    public void showError(final String errorMessage, final Throwable throwable) {
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                String msg = String.format("%s: %s", errorMessage, throwable);
-                com.couchbase.lite.util.Log.e(TAG, msg, throwable);
-                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
-            }
-        });
-
     }
 
     @Override
